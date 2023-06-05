@@ -1,2 +1,2 @@
 # DAO
-Decentralized Autonomously Organized Society Framework written on for koinos 
+Decentralized Autonomously Organized Society Framework written in rust for koinos 
