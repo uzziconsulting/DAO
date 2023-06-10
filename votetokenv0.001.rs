@@ -84,3 +84,42 @@ impl VotingContract {
         true
     }
 }
+
+#ZKP ownership outline 
+use bulletproofs::{BulletproofGens, PedersenGens, RangeProof, R1CSProof, Verifier};
+use curve25519_dalek::scalar::Scalar;
+use merlin::Transcript;
+
+struct Deed {
+    commitment: CompressedRistretto,
+    proof: R1CSProof,
+}
+
+struct MembershipTokenContract {
+    state: HashMap<String, u64>,
+    votes: HashMap<String, u64>,
+    deeds: HashMap<String, Deed>,
+}
+
+impl MembershipTokenContract {
+    fn verify_deed(&self, deed_id: String) -> Result<bool, Box<dyn Error>> {
+        let deed = self.deeds.get(&deed_id).ok_or("Deed not found")?;
+
+        let pc_gens = PedersenGens::default();
+        let bp_gens = BulletproofGens::new(64, 1);
+        let mut verifier_transcript = Transcript::new(b"DeedProof");
+
+        // Verify the zero-knowledge proof
+        match RangeProof::verify_single(
+            &deed.proof,
+            &bp_gens,
+            &pc_gens,
+            &mut verifier_transcript,
+            &deed.commitment,
+            64,
+        ) {
+            Ok(_) => Ok(true),
+            Err(_) => Ok(false),
+        }
+    }
+}
